@@ -853,6 +853,7 @@ body.on-home header.top p{display:none}
 
   <div class="toolbar">
     <button class="ghost" id="btnSaveHoraire">Forcer l'enregistrement maintenant</button>
+    <button class="ghost" id="btnViderHoraire" type="button">🗑 Vider tout l'horaire type</button>
     <span class="help" id="horaireMsg"></span>
   </div>
   <p class="help" style="margin-top:6px">Chaque modification s'enregistre automatiquement — ce bouton n'est utile que si tu veux forcer l'enregistrement tout de suite.</p>
@@ -8843,14 +8844,8 @@ const JOURS=["Lundi","Mardi","Mercredi","Jeudi","Vendredi"];
 const DCOLORS={"Lundi":"var(--d1)","Mardi":"var(--d2)","Mercredi":"var(--d3)","Jeudi":"var(--d4)","Vendredi":"var(--d5)"};
 
 function defaultHoraire(){
-  const base=[
-    {id:uid(),debut:"08:30",fin:"09:20",matiere:""},
-    {id:uid(),debut:"09:20",fin:"10:10",matiere:""},
-    {id:uid(),debut:"10:10",fin:"10:25",matiere:""},
-    {id:uid(),debut:"10:25",fin:"11:15",matiere:""},
-    {id:uid(),debut:"11:15",fin:"12:05",matiere:""},
-  ];
-  const h={}; JOURS.forEach(j=>{ h[j]=base.map(p=>({...p,id:uid()})); }); return h;
+  /* on part de zéro : aucune période pré-remplie, chacune construit son horaire */
+  const h={}; JOURS.forEach(j=>{ h[j]=[]; }); return h;
 }
 
 let horaireConfig=null; // {mode:'simple'|'ab', simple:{jours}, A:{jours}, B:{jours}, refMonday:'YYYY-MM-DD', refType:'A'}
@@ -9758,6 +9753,11 @@ function slotRow(jours,jour,p){
   if(p.pause) wrap.append(row); else wrap.append(row,codesRow);
   return wrap;
 }
+$('btnViderHoraire').onclick=async ()=>{
+  if(!(await customConfirm("Vider tout l'horaire type (semaine unique, horaire A et horaire B) pour repartir de zéro ? Les semaines déjà ouvertes ne sont pas modifiées."))) return;
+  horaireConfig.simple=defaultHoraire(); horaireConfig.A=defaultHoraire(); horaireConfig.B=defaultHoraire();
+  renderHoraireEditor(); await saveHoraireStorage(); showOk("Horaire type vidé");
+};
 $('btnSaveHoraire').onclick=async ()=>{
   await saveHoraireStorage();
   $('horaireMsg').textContent='Horaire type enregistré ✓';
@@ -13215,7 +13215,7 @@ $('btnPlanDayIcs').onclick=async ()=>{
 };
 
 /* ============ À propos / version ============ */
-const APP_VERSION='2026-10-11r';
+const APP_VERSION='2026-10-11t';
 $('aboutVersion').textContent=APP_VERSION;
 $('btnAbout').onclick=()=>openDialog('dlgAbout');
 $('dlgAboutClose').onclick=()=>closeDialog('dlgAbout');
